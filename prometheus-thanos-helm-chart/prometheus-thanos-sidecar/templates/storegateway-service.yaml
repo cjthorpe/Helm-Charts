@@ -1,0 +1,28 @@
+{{- if .Values.storegateway.enabled -}}
+apiVersion: v1
+kind: Service
+metadata:
+{{- if .Values.storegateway.service.annotations }}
+  annotations:
+{{ toYaml .Values.storegateway.service.annotations | indent 4 }}
+{{- end }}
+  labels:
+    {{- include "prometheus.storegateway.labels" . | nindent 4 }}
+{{- if .Values.storegateway.service.labels }}
+{{ toYaml .Values.storegateway.service.labels | indent 4 }}
+{{- end }}
+  name: {{ template "prometheus.storegateway.fullname" . }}
+spec:
+  ports:
+    - name: grpc
+      port: {{ .Values.storegateway.service.grpc.port }}
+      protocol: TCP
+      targetPort: grpc
+    - name: http
+      port: {{ .Values.storegateway.service.http.port }}
+      protocol: TCP
+      targetPort: http
+  selector:
+    {{- include "prometheus.storegateway.matchLabels" . | nindent 4 }}
+  type: "{{ .Values.storegateway.service.type }}"
+{{- end -}}

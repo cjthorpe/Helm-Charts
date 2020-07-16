@@ -1,0 +1,91 @@
+{{- if .Values.querier.enabled -}}
+apiVersion: extensions/v1beta1
+kind: Deployment
+metadata:
+  labels:
+    {{- include "prometheus.querier.labels" . | nindent 4 }}
+  name: {{ template "prometheus.server.fullname" . }}-querier
+spec:
+  selector:
+    matchLabels:
+      {{- include "prometheus.querier.matchLabels" . | nindent 6 }} 
+  replicas: {{ .Values.querier.replicaCount }}
+  {{- if .Values.server.strategy }}
+  strategy:
+{{ toYaml .Values.server.strategy | indent 4 }}
+  {{- end }}
+  template:
+    metadata:
+      labels:
+        {{- include "prometheus.querier.labels" . | nindent 8 }}
+        {{- if .Values.querier.podLabels}}
+        {{ toYaml .Values.server.podLabels | nindent 8 }}
+        {{- end}}
+    spec:
+{{- if .Values.querier.priorityClassName }}
+      priorityClassName: "{{ .Values.querier.priorityClassName }}"
+{{- end }}
+{{- if .Values.querier.schedulerName }}
+      schedulerName: "{{ .Values.querier.schedulerName }}"
+{{- end }}
+      serviceAccountName: {{ template "prometheus.serviceAccountName.querier" . }}
+      containers:
+        - name: {{ template "prometheus.name" . }}--querier
+          imagePullPolicy: {{ .Values.querier.image.pullPolicy }}
+          image: "{{ .Values.querier.image.repository }}:{{ .Values.querier.image.tag }}"
+          args:
+            - query
+            - --log.level={{ .Values.querier.logLevel }}
+            - --query.replica-label={{ .Values.querier.replicaLabel }}
+          {{- range .Values.querier.stores }}
+            - --store={{ . }}
+          {{- end }}
+          {{- range $key, $value := .Values.querier.additionalFlags }}
+            - --{{ $key }}{{if $value }}={{ $value }}{{end}}
+          {{- end }}
+          ports:
+            - name: http
+              containerPort: 10902
+              protocol: TCP
+            - name: grpc
+              containerPort: 10901
+              protocol: TCP 
+          livenessProbe:
+            httpGet:
+              path: /-/healthy
+              port: http
+            initialDelaySeconds: {{ .Values.querier.livenessProbe.initialDelaySeconds }}
+            periodSeconds: {{ .Values.querier.livenessProbe.periodSeconds }}
+            successThreshold: {{ .Values.querier.livenessProbe.successThreshold }}
+            timeoutSeconds: {{ .Values.querier.livenessProbe.timeoutSeconds }}
+          readinessProbe:
+            httpGet:
+              path: /-/ready
+              port: http
+            initialDelaySeconds: {{ .Values.querier.readinessProbe.initialDelaySeconds }}
+            periodSeconds: {{ .Values.querier.readinessProbe.periodSeconds }}
+            successThreshold: {{ .Values.querier.readinessProbe.successThreshold }}
+            timeoutSeconds: {{ .Values.querier.readinessProbe.timeoutSeconds }}
+          resources:
+            {{- toYaml .Values.querier.resources | nindent 12 }}
+          {{- with .Values.querier.volumeMounts }}
+          volumeMounts:
+            {{- toYaml . | nindent 14 }}
+          {{- end }}
+      {{- with .Values.querier.nodeSelector }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}  
+    {{- with .Values.querier.affinity }}
+      affinity:
+        {{- toYaml . | nindent 8 }}
+    {{- end }}
+    {{- with .Values.querier.tolerations }}
+      tolerations:
+        {{- toYaml . | nindent 8 }}
+    {{- end }}
+    {{- with .Values.querier.volumes }}
+      volumes:
+        {{- toYaml . | nindent 8 }}
+    {{- end }}
+{{- end }}

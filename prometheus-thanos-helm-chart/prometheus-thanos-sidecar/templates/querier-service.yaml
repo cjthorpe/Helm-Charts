@@ -1,0 +1,28 @@
+{{- if .Values.querier.enabled -}}
+apiVersion: v1
+kind: Service
+metadata:
+{{- if .Values.querier.service.annotations }}
+  annotations:
+{{ toYaml .Values.querier.service.annotations | indent 4 }}
+{{- end }}
+  labels:
+    {{- include "prometheus.querier.labels" . | nindent 4 }}
+{{- if .Values.querier.service.labels }}
+{{ toYaml .Values.querier.service.labels | indent 4 }}
+{{- end }}
+  name: {{ template "prometheus.querier.fullname" . }}
+spec:
+  ports:
+    - name: grpc
+      port: {{ .Values.querier.service.grpc.port }}
+      protocol: TCP
+      targetPort: grpc
+    - name: http
+      port: {{ .Values.querier.service.http.port }}
+      protocol: TCP
+      targetPort: http
+  selector:
+    {{- include "prometheus.querier.matchLabels" . | nindent 4 }}
+  type: "{{ .Values.querier.service.type }}"
+{{- end -}}

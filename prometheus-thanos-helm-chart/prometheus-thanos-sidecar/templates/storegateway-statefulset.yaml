@@ -1,0 +1,134 @@
+{{- if .Values.storegateway.enabled -}}
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  labels:
+    {{- include "prometheus.storegateway.labels" . | nindent 4 }}
+  name: {{ template "prometheus.storegateway.fullname" . }}
+spec:
+  serviceName: {{ template "prometheus.storegateway.fullname" . }}-headless
+  selector:
+    matchLabels:
+      {{- include "prometheus.storegateway.matchLabels" . | nindent 6 }}
+  replicas: {{ .Values.storegateway.replicaCount }}
+  podManagementPolicy: {{ .Values.storegateway.statefulSet.podManagementPolicy }}
+  template:
+    metadata:
+      labels:
+        {{- include "prometheus.storegateway.labels" . | nindent 8 }}
+    spec:
+      serviceAccountName: {{ template "prometheus.serviceAccountName.storegateway" . }}
+      containers:
+        - name: {{ template "prometheus.name" . }}-{{ .Values.storegateway.name }}
+          imagePullPolicy: {{ .Values.storegateway.image.pullPolicy }}
+          image: "{{ .Values.storegateway.image.repository }}:{{ .Values.storegateway.image.tag }}"
+          args:
+          - store
+          - --data-dir=/data
+          - --log.level={{ .Values.storegateway.logLevel }}
+          - |
+            --index-cache.config=type: {{ .Values.storegateway.indexCache.type }}
+            config:
+            {{- toYaml .Values.storegateway.indexCache.config | nindent 14 }}
+          - --chunk-pool-size={{ .Values.storegateway.chunkPoolSize }}
+          {{- range $key, $value := .Values.storegateway.additionalFlags }}
+          - --{{ $key }}{{if $value }}={{ $value }}{{end}}
+          {{- end }}
+          {{- if .Values.storegateway.objStoreType }}
+          - |
+            --objstore.config=type: {{ .Values.storegateway.objStoreType }}
+            config:
+            {{- toYaml .Values.storegateway.objStoreConfig | nindent 14 }}
+          {{ else if .Values.storegateway.objStoreConfigFile }}
+          - --objstore.config-file={{ .Values.storegateway.objStoreConfigFile }}
+          {{- end }}
+          {{- if .Values.storegateway.disableIndexHeader }}
+          - --store.disable-index-header
+          {{- end }}
+          ports:
+            - name: http
+              containerPort: 10902
+              protocol: TCP
+            - name: grpc
+              containerPort: 10901
+              protocol: TCP
+          {{- if .Values.storegateway.extraEnv }}
+          env:
+            {{- toYaml .Values.storegateway.extraEnv | nindent 12 }}
+          {{- end }}
+          livenessProbe:
+            httpGet:
+              path: /-/healthy
+              port: http
+            initialDelaySeconds: {{ .Values.storegateway.livenessProbe.initialDelaySeconds }}
+            periodSeconds: {{ .Values.storegateway.livenessProbe.periodSeconds }}
+            successThreshold: {{ .Values.storegateway.livenessProbe.successThreshold }}
+            timeoutSeconds: {{ .Values.storegateway.livenessProbe.timeoutSeconds }}
+          readinessProbe:
+            httpGet:
+              path: /-/ready
+              port: http
+            initialDelaySeconds: {{ .Values.storegateway.readinessProbe.initialDelaySeconds }}
+            periodSeconds: {{ .Values.storegateway.readinessProbe.periodSeconds }}
+            successThreshold: {{ .Values.storegateway.readinessProbe.successThreshold }}
+            timeoutSeconds: {{ .Values.storegateway.readinessProbe.timeoutSeconds }}
+          resources:
+            {{- toYaml .Values.storegateway.resources | nindent 12 }}
+          volumeMounts:
+            - mountPath: /data
+              name: storage-volume
+          {{- with .Values.storegateway.volumeMounts }}
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+      {{- with .Values.storegateway.nodeSelector }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.storegateway.affinity }}
+      affinity:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.storegateway.tolerations }}
+      tolerations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      volumes:
+        {{- with .Values.storegateway.volumes }}
+        {{- toYaml . | nindent 8 }}
+        {{- end }}
+        {{- if not .Values.storegateway.persistentVolume.enabled }}
+        - name: storage-volume
+          emptyDir: {}
+        {{- else if .Values.storegateway.persistentVolume.existingClaim }}
+        - name: storage-volume
+          persistentVolumeClaim:
+            claimName: {{ .Values.storegateway.persistentVolume.existingClaim }}
+        {{- end }}
+      {{- if .Values.storegateway.podNumericalPriorityEnabled }}
+      priority: {{ .Values.storegateway.podPriority }}
+      {{- else if .Values.storegateway.podPriorityClassName }}
+      priorityClassName: {{ .Values.storegateway.podPriorityClassName }}
+      {{- end }}
+  {{- if and .Values.storegateway.persistentVolume.enabled (not .Values.storegateway.persistentVolume.existingClaim) }}
+  volumeClaimTemplates:
+    - metadata:
+        name: storage-volume
+        {{- if .Values.storegateway.persistentVolume.annotations }}
+        annotations:
+        {{- toYaml .Values.storegateway.persistentVolume.annotations | nindent 10 }}
+        {{- end }}
+      spec:
+        accessModes:
+        {{- toYaml .Values.storegateway.persistentVolume.accessModes | nindent 10 }}
+        resources:
+          requests:
+            storage: "{{ .Values.storegateway.persistentVolume.size }}"
+        {{- if .Values.storegateway.persistentVolume.storageClass }}
+        {{- if (eq "-" .Values.storegateway.persistentVolume.storageClass) }}
+        storageClassName: ""
+        {{- else }}
+        storageClassName: "{{ .Values.storegateway.persistentVolume.storageClass }}"
+        {{- end }}
+        {{- end }}
+  {{- end }}
+{{- end }}

@@ -1,0 +1,33 @@
+apiVersion: v2
+name: prometheus-thanos-sidecar
+description: A Helm chart for deploying Prometheus with a Thanos sidecar.
+
+# A chart can be either an 'application' or a 'library' chart.
+#
+# Application charts are a collection of templates that can be packaged into versioned archives
+# to be deployed.
+#
+# Library charts provide useful utilities or functions for the chart developer. They're included as
+# a dependency of application charts to inject those utilities and functions into the rendering
+# pipeline. Library charts do not define any templates and therefore cannot be deployed.
+type: application
+
+# This is the chart version. This version number should be incremented each time you make changes
+# to the chart and its templates, including the app version.
+version: 1.0.11
+appVersion: 1.0.11
+
+home: https://prometheus.io/
+icon: https://raw.githubusercontent.com/prometheus/prometheus.github.io/master/assets/prometheus_logo-cb55bb5c346.png
+sources:
+  - https://github.com/prometheus/alertmanager
+  - https://github.com/prometheus/prometheus
+  - https://github.com/prometheus/pushgateway
+  - https://github.com/prometheus/node_exporter
+  - https://github.com/kubernetes/kube-state-metrics
+maintainers:
+  - name: mgoodness
+    email: mgoodness@gmail.com
+  - name: gianrubio
+    email: gianrubio@gmail.com
+engine: gotpl
