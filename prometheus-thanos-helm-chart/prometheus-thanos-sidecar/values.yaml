@@ -7,8 +7,8 @@ podSecurityPolicy:
 imagePullSecrets:
 # - name: "image-pull-secret"
 
-## Define serviceAccount names for components. Defaults to component's fully qualified name.
-##
+# Define serviceAccount names for components. Defaults to component's fully qualified name.
+#
 serviceAccounts:
   alertmanager:
     create: true
@@ -881,7 +881,6 @@ server:
 
     labels: {}
     loadBalancerIP: ""
-    #loadBalancerSourceRanges: [10.223.69.192/26,52.56.62.128/25,52.56.196.0/22,3.9.208.0/24,10.223.72.0/22]
     servicePort: 80
     type: ClusterIP
 
@@ -1100,12 +1099,12 @@ thanosSidecar:
     key: ""
 
 
-## Prometheus server ConfigMap entries
-##
+# Prometheus server ConfigMap entries
+#
 serverFiles:
 
-#   ## Alerts configuration
-#   ## Ref: https://prometheus.io/docs/prometheus/latest/configuration/alerting_rules/
+# Alerts configuration
+# Ref: https://prometheus.io/docs/prometheus/latest/configuration/alerting_rules/
   alerts: {}
 
   rules: {}
