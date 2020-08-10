@@ -24,5 +24,8 @@ spec:
       targetPort: http
   selector:
     {{- include "prometheus.storegateway.matchLabels" . | nindent 4 }}
+{{- if .Values.storegateway.service.labels }}
+{{ toYaml .Values.storegateway.service.labels | indent 4 }}
+{{- end }}
   type: "{{ .Values.storegateway.service.type }}"
 {{- end -}}
