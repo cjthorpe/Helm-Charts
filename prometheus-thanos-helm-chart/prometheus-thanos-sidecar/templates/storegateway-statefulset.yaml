@@ -16,6 +16,9 @@ spec:
     metadata:
       labels:
         {{- include "prometheus.storegateway.labels" . | nindent 8 }}
+{{- if .Values.storegateway.statefulSet.labels }}
+{{ toYaml .Values.storegateway.statefulSet.labels | indent 8 }}
+{{- end }}
     spec:
       serviceAccountName: {{ template "prometheus.serviceAccountName.storegateway" . }}
       containers:
