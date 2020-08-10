@@ -657,6 +657,7 @@ querier:
     create: false
   stores: 
     - "dnssrv+_grpc._tcp.prometheus-thanos-sidecar-storegateway.<NAMESPACE>.svc.cluster.local"
+    - "dnssrv+_grpc._tcp.prometheus-thanos-sidecar-server-thanos-sidecar-grpc.<NAMESPACE>.svc.cluster.local"
   tolerations: []
   updateStrategy:
     type: RollingUpdate
@@ -817,7 +818,8 @@ server:
   # Annotations to be added to Prometheus server pods
     # iam.amazonaws.com/role: prometheus
 
-  podLabels: {}
+  podLabels:
+    thanosStoreApi: "true"
   # Labels to be added to Prometheus server pods
 
   podSecurityPolicy:
@@ -905,7 +907,8 @@ server:
       labels: {}
       servicePort: 80
 
-    labels: {}
+    labels:
+      thanosStoreApi: "true"
     podManagementPolicy: OrderedReady
 
   terminationGracePeriodSeconds: 300
@@ -1008,10 +1011,14 @@ storegateway:
       port: 10901
     http:
       port: 9090
+    labels:
+      thanosStoreApi: "true"
     type: ClusterIP
   serviceAccount:
     create: false
   statefulSet:
+    labels:
+      thanosStoreApi: "true"
     podManagementPolicy: OrderedReady
   tolerations: []
   updateStrategy: RollingUpdate
