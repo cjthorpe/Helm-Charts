@@ -1,0 +1,22 @@
+{{- if .Values.ingress.enabled -}}
+apiVersion: extensions/v1beta1
+kind: Ingress
+metadata:
+  name: {{ .Values.ingress.name }}
+  annotations:
+    cert-manager.io/cluster-issuer: {{ .Values.ingress.certManagerIssuer }}
+    kubernetes.io/ingress.class: "nginx"
+spec:
+  tls:
+  - hosts:
+    - {{ .Values.ingress.name }}.{{ .Values.ingress.dns }}
+    secretName: {{ .Values.ingress.name }}-tls
+  rules:
+  - host: {{ .Values.ingress.name }}.{{ .Values.ingress.dns }}
+    http:
+      paths:
+      - path: /
+        backend:
+          serviceName: {{ template "grafana.fullname" . }}
+          servicePort: {{ .Values.ingress.servicePort }}
+{{- end }}

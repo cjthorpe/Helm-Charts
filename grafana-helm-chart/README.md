@@ -1,7 +1,7 @@
-# prometheus-thanos-helm-chart
+# grafana-helm-chart
 -------------
 
-Deploys Prometheus along with a Thanos sidecar using a Helm chart.
+Deploys Grafana using a Helm chart.
 
 -------------
 ## Prerequisites
@@ -15,8 +15,8 @@ Deploys Prometheus along with a Thanos sidecar using a Helm chart.
 Clone this repository and run the following commands from root.
 
 ```console
-$ cd prometheus-thanos-helm-chart
-$ helm upgrade --install prometheus-thanos-sidecar --values ./prometheus-thanos-sidecar/values.yaml ./prometheus-thanos-sidecar --debug -n <namesapce>
+$ cd grafana-helm-chart
+$ helm upgrade --install grafana --values ./grafana/values.yaml ./grafana --debug -n <namesapce>
 ```
 
 Note it is important that you configure your values file first.
